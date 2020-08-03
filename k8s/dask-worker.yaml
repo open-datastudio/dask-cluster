@@ -1,0 +1,32 @@
+kind: Pod
+metadata:
+  labels:
+    # see https://docs.staroid.com/ske/pod.html#pod for more optinos
+    pod.staroid.com/isolation: sandboxed # sandboxed or dedicated
+    pod.staroid.com/instance-type: standard-2 # in case of dedicated, need to specify instance type
+    pod.staroid.com/spot: "false"
+spec:
+  # staroid does not allow root container. Need to specify uid.
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 100
+  restartPolicy: Never
+  containers:
+  - image: daskdev/dask:latest
+    imagePullPolicy: IfNotPresent
+    args: [dask-worker, --nthreads, '1', --no-dashboard, --memory-limit, 4GB, --death-timeout, '60', --local-directory, '/tmp/dask-worker-space']
+    name: dask
+    env:
+      - name: EXTRA_PIP_PACKAGES
+        value: git+https://github.com/dask/distributed
+      - name: HOME
+        value: /tmp
+    resources:
+      # resource limits and request need to be specified on sandboxed mode.
+      # dedicated mode gives maxium limit based on selected instance-type.
+      limits:
+        cpu: "1"
+        memory: 4G
+      requests:
+        cpu: "1"
+        memory: 4G
